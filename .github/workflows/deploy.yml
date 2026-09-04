@@ -28,7 +28,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
       - name: Configure Drive API
-        run: echo "VITE_GOOGLE_DRIVE_API_KEY=${{ secrets.VITE_GOOGLE_DRIVE_API_KEY }}" > .env.local
+        env:
+          DRIVE_API_KEY: ${{ secrets.VITE_GOOGLE_DRIVE_API_KEY }}
+        run: |
+          if [ -z "$DRIVE_API_KEY" ]; then
+            echo "VITE_GOOGLE_DRIVE_API_KEY is missing"
+            exit 1
+          fi
+          printf 'VITE_GOOGLE_DRIVE_API_KEY=%s\n' "$DRIVE_API_KEY" > .env.local
       - name: Build
         run: npm run build
       - name: Upload Pages artifact
