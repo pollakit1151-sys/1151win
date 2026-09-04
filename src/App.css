@@ -20,7 +20,7 @@
 .folder-button::before { background: linear-gradient(145deg, transparent 45%, rgba(255, 255, 255, .08)); }
 .folder-shade { background: linear-gradient(180deg, rgba(0, 0, 0, .08) 10%, rgba(0, 0, 0, .92) 100%); }
 .folder-button:hover, .folder-button.is-active { border-color: #8a8a8a; color: #fff; background: #1c1c1c; }
-.folder-image { filter: grayscale(100%) contrast(.92); }
+.folder-image { filter: saturate(.95) contrast(.98); }
 .morphing-overlay { background: rgba(0, 0, 0, .84); }
 .folder-dialog, .morphing-dialog { border-color: #4a4a4a; background: #151515; }
 .folder-dialog-header { border-color: #2d2d2d; }
@@ -28,7 +28,7 @@
 .morphing-card { --item-accent: #f2f2f2 !important; border-color: #303030; background: #1c1c1c; }
 .morphing-card:hover { border-color: #9a9a9a; }
 .morphing-preview, .morphing-dialog-preview { color: #d6d6d6; background: #242424; }
-.morphing-preview img { filter: grayscale(100%); }
+.morphing-preview img { filter: none; }
 .morphing-info p, .morphing-dialog-body > p { color: #bdbdbd; }
 .morphing-info span, .morphing-description, .dialog-notice span { color: #969696; }
 .morphing-action { color: #090909; background: #f2f2f2; }
