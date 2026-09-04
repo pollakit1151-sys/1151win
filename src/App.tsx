@@ -40,8 +40,8 @@ function getFileIcon(mimeType: string) {
 }
 
 function getFilePreview(file: DriveFile) {
-  if (file.mimeType.startsWith('image/')) return `https://drive.google.com/thumbnail?id=${file.id}&sz=w2000`
   if (file.thumbnailLink) return file.thumbnailLink.replace(/=s\d+$/, '=s1200')
+  if (file.mimeType.startsWith('image/')) return `https://drive.google.com/thumbnail?id=${file.id}&sz=w2000`
   return ''
 }
 
