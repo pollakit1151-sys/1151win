@@ -17,6 +17,12 @@
 .image-grid .morphing-card { aspect-ratio: 1 / 1; }
 .image-grid .morphing-preview { height: 100%; }
 .image-grid .morphing-preview img { object-fit: cover; }
+.visual-card .morphing-preview { height: 100%; min-height: 0; }
+.visual-card .morphing-preview img { object-fit: contain; background: #151816; }
+.document-card .morphing-info { padding: 8px 10px; }
+.document-card .morphing-info p { font-size: 8px; }
+.document-card .morphing-info h3 { margin: 4px 0 7px; font-size: 10px; }
+.document-card .morphing-info span { font-size: 8px; }
 
 /* Folder artwork is monochrome; Drive file previews remain full color. */
 .folder-image { filter: grayscale(100%) contrast(.96); }
