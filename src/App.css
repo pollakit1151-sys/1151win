@@ -23,6 +23,11 @@
 .document-card .morphing-info p { font-size: 8px; }
 .document-card .morphing-info h3 { margin: 4px 0 7px; font-size: 10px; }
 .document-card .morphing-info span { font-size: 8px; }
+.half-picker { margin-bottom: 18px; padding: 14px; border: 1px solid #3d3d3d; background: #1b1b1b; }
+.half-picker p { display: flex; align-items: center; gap: 7px; margin-bottom: 11px; color: #bdbdbd; font-size: 12px; }
+.half-picker > div { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+.half-picker button { min-height: 42px; border: 1px solid #4a4a4a; color: #bdbdbd; background: #242424; font: 11px 'DM Mono', monospace; cursor: pointer; }
+.half-picker button:hover, .half-picker button.selected { border-color: #f2f2f2; color: #090909; background: #f2f2f2; }
 
 /* Folder artwork is monochrome; Drive file previews remain full color. */
 .folder-image { filter: grayscale(100%) contrast(.96); }

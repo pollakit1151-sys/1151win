@@ -1,5 +1,5 @@
 import { AnimatePresence, LayoutGroup, motion } from 'motion/react'
-import { ArrowUpRight, Download, ExternalLink, LoaderCircle, RefreshCw, X } from 'lucide-react'
+import { ArrowUpRight, CalendarDays, Download, ExternalLink, LoaderCircle, RefreshCw, X } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 
 type MorphingItem = {
@@ -11,6 +11,7 @@ type MorphingItem = {
   href: string
   download?: boolean
   visual?: boolean
+  modifiedTime?: string
   accent: string
   icon: React.ComponentType<{ size?: number; strokeWidth?: number; className?: string }>
   content?: ReactNode
@@ -26,11 +27,21 @@ type MorphingDialogProps = {
   folderHref: string
   onClose: () => void
   onRetry: () => void
+  isImageFolder: boolean
 }
 
-export function MorphingDialog({ open, title, items, isLoading, error, apiKeyMissing, folderHref, onClose, onRetry }: MorphingDialogProps) {
+export function MorphingDialog({ open, title, items, isLoading, error, apiKeyMissing, folderHref, onClose, onRetry, isImageFolder }: MorphingDialogProps) {
   const [activeItem, setActiveItem] = useState<MorphingItem | null>(null)
+  const [selectedHalf, setSelectedHalf] = useState<1 | 2 | null>(null)
   if (!open) return null
+
+  const visibleItems = isImageFolder && selectedHalf
+    ? items.filter((item) => {
+      if (!item.modifiedTime) return false
+      const month = new Date(item.modifiedTime).getMonth() + 1
+      return selectedHalf === 1 ? month <= 6 : month >= 7
+    })
+    : items
 
   return <LayoutGroup>
     <AnimatePresence>
@@ -41,7 +52,9 @@ export function MorphingDialog({ open, title, items, isLoading, error, apiKeyMis
           {isLoading && <div className="state-message"><LoaderCircle className="spin" size={24} /><span>กำลังโหลดไฟล์...</span></div>}
           {error && <div className="state-message error-message"><span>{error}</span><button onClick={onRetry}><RefreshCw size={16} /> ลองใหม่</button></div>}
           {!apiKeyMissing && !isLoading && !error && items.length === 0 && <div className="state-message"><span>ยังไม่มีไฟล์ในโฟลเดอร์นี้</span></div>}
-          {!apiKeyMissing && !isLoading && !error && items.length > 0 && <div className={`morphing-grid ${items.every((item) => item.visual) ? 'image-grid' : ''}`}>{items.map((item, index) => { const Icon = item.icon; return <motion.button key={item.id} className={`morphing-card ${item.visual ? 'visual-card' : 'document-card'}`} onClick={() => setActiveItem(item)} style={{ '--item-accent': item.accent } as React.CSSProperties} layoutId={`card-${item.id}`} initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * .04 }} whileHover={{ y: -5 }}><div className="morphing-preview">{item.image ? <img src={item.image} alt={item.visual ? '' : item.title} loading="lazy" /> : <Icon size={43} strokeWidth={1.2} />}</div>{!item.visual && <div className="morphing-info"><p>{item.subtitle}</p><h3>{item.title}</h3><span>{item.download ? <Download size={15} /> : <ArrowUpRight size={15} />} {item.download ? 'ดาวน์โหลดได้' : 'เปิดดูไฟล์'}</span></div>}</motion.button> })}</div>}
+          {!apiKeyMissing && !isLoading && !error && isImageFolder && <div className="half-picker"><p><CalendarDays size={16} /> เลือกช่วงเวลาที่ต้องการดู</p><div><button className={selectedHalf === 1 ? 'selected' : ''} onClick={() => setSelectedHalf(1)}>มกราคม - มิถุนายน</button><button className={selectedHalf === 2 ? 'selected' : ''} onClick={() => setSelectedHalf(2)}>กรกฎาคม - ธันวาคม</button></div></div>}
+          {!apiKeyMissing && !isLoading && !error && isImageFolder && selectedHalf && visibleItems.length === 0 && <div className="state-message"><span>ไม่พบรูปภาพในช่วงเวลานี้</span></div>}
+          {!apiKeyMissing && !isLoading && !error && (!isImageFolder || selectedHalf) && visibleItems.length > 0 && <div className={`morphing-grid ${visibleItems.every((item) => item.visual) ? 'image-grid' : ''}`}>{visibleItems.map((item, index) => { const Icon = item.icon; return <motion.button key={item.id} className={`morphing-card ${item.visual ? 'visual-card' : 'document-card'}`} onClick={() => setActiveItem(item)} style={{ '--item-accent': item.accent } as React.CSSProperties} layoutId={`card-${item.id}`} initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * .04 }} whileHover={{ y: -5 }}><div className="morphing-preview">{item.image ? <img src={item.image} alt={item.visual ? '' : item.title} loading="lazy" /> : <Icon size={43} strokeWidth={1.2} />}</div>{!item.visual && <div className="morphing-info"><p>{item.subtitle}</p><h3>{item.title}</h3><span>{item.download ? <Download size={15} /> : <ArrowUpRight size={15} />} {item.download ? 'ดาวน์โหลดได้' : 'เปิดดูไฟล์'}</span></div>}</motion.button> })}</div>}
         </motion.div>
       </motion.div>
       {activeItem && <motion.div className="morphing-overlay nested-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setActiveItem(null)}><motion.div className="morphing-dialog" layoutId={`card-${activeItem.id}`} style={{ '--item-accent': activeItem.accent } as React.CSSProperties} onClick={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-label={activeItem.title}><button className="morphing-close" onClick={() => setActiveItem(null)} aria-label="ปิด"><X size={18} /></button><div className="morphing-dialog-preview">{activeItem.image ? <img src={activeItem.image} alt={activeItem.title} /> : <activeItem.icon size={64} strokeWidth={1.1} />}</div><div className="morphing-dialog-body"><p>{activeItem.subtitle}</p><h2>{activeItem.title}</h2><div className="morphing-description">{activeItem.content ?? activeItem.description}</div><a className="morphing-action" href={activeItem.href} target="_blank" rel="noreferrer">{activeItem.download ? <Download size={17} /> : <ArrowUpRight size={17} />} {activeItem.download ? 'ดาวน์โหลดไฟล์' : 'เปิดไฟล์ใน Drive'}</a></div></motion.div></motion.div>}
