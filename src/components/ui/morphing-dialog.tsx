@@ -36,8 +36,8 @@ export function MorphingDialog({ open, title, items, isLoading, error, apiKeyMis
   if (!open) return null
 
   const datedItems = items.filter((item) => item.modifiedTime).sort((first, second) => new Date(second.modifiedTime ?? 0).getTime() - new Date(first.modifiedTime ?? 0).getTime())
-  const latestDate = datedItems[0] ? new Date(datedItems[0].modifiedTime ?? Date.now()) : new Date()
-  const periods = isImageFolder && datedItems.length > 0 ? Array.from({ length: Math.ceil((latestDate.getTime() - new Date(datedItems[datedItems.length - 1].modifiedTime ?? latestDate).getTime()) / (1000 * 60 * 60 * 24 * 30 * 6)) + 1 }, (_, index) => {
+  const latestDate = datedItems[0] ? new Date(datedItems[0].modifiedTime ?? 0) : new Date(0)
+  const periods = isImageFolder && datedItems.length > 0 ? Array.from({ length: Math.ceil((latestDate.getTime() - new Date(datedItems[datedItems.length - 1].modifiedTime ?? 0).getTime()) / (1000 * 60 * 60 * 24 * 30 * 6)) + 1 }, (_, index) => {
     const end = new Date(latestDate)
     end.setMonth(end.getMonth() - index * 6)
     const start = new Date(end)
