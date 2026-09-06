@@ -37,11 +37,15 @@ export function MorphingDialog({ open, title, items, isLoading, error, apiKeyMis
 
   const datedItems = items.filter((item) => item.modifiedTime).sort((first, second) => new Date(second.modifiedTime ?? 0).getTime() - new Date(first.modifiedTime ?? 0).getTime())
   const latestDate = datedItems[0] ? new Date(datedItems[0].modifiedTime ?? 0) : new Date(0)
-  const periods = isImageFolder && datedItems.length > 0 ? Array.from({ length: Math.ceil((latestDate.getTime() - new Date(datedItems[datedItems.length - 1].modifiedTime ?? 0).getTime()) / (1000 * 60 * 60 * 24 * 30 * 6)) + 1 }, (_, index) => {
+  const oldestDate = datedItems[datedItems.length - 1] ? new Date(datedItems[datedItems.length - 1].modifiedTime ?? 0) : latestDate
+  const monthDistance = (latestDate.getFullYear() - oldestDate.getFullYear()) * 12 + latestDate.getMonth() - oldestDate.getMonth()
+  const periods = isImageFolder && datedItems.length > 0 ? Array.from({ length: Math.floor(monthDistance / 6) + 1 }, (_, index) => {
     const end = new Date(latestDate)
+    end.setHours(23, 59, 59, 999)
     end.setMonth(end.getMonth() - index * 6)
     const start = new Date(end)
     start.setMonth(start.getMonth() - 6)
+    start.setHours(23, 59, 59, 999)
     return { key: `${start.toISOString()}-${end.toISOString()}`, start, end, label: index === 0 ? 'ล่าสุด 6 เดือน' : `${start.toLocaleDateString('th-TH', { month: 'short', year: 'numeric' })} - ${end.toLocaleDateString('th-TH', { month: 'short', year: 'numeric' })}` }
   }) : []
   const activePeriod = selectedPeriod ?? periods[0]?.key
