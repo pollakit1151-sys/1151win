@@ -46,7 +46,7 @@ export function MorphingDialog({ open, title, items, isLoading, error, apiKeyMis
   }) : []
   const activePeriod = selectedPeriod ?? periods[0]?.key
   const visibleItems = isImageFolder && activePeriod
-    ? items.filter((item) => { const period = periods.find((entry) => entry.key === activePeriod); if (!period || !item.modifiedTime) return false; const time = new Date(item.modifiedTime).getTime(); return time > period.start.getTime() && time <= period.end.getTime() })
+    ? items.filter((item) => { const period = periods.find((entry) => entry.key === activePeriod); if (!period || !item.modifiedTime) return false; const time = new Date(item.modifiedTime).getTime(); return time > period.start.getTime() && time <= period.end.getTime() }).sort((first, second) => new Date(second.modifiedTime ?? 0).getTime() - new Date(first.modifiedTime ?? 0).getTime())
     : items
 
   return <LayoutGroup>
