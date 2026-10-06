@@ -65,7 +65,7 @@ function App() {
     try {
       const query = encodeURIComponent(`'${collection.id}' in parents and trashed = false`)
       const fields = encodeURIComponent('files(id,name,mimeType,modifiedTime,size,thumbnailLink,webViewLink,webContentLink)')
-      const response = await fetch(`https://www.googleapis.com/drive/v3/files?q=${query}&pageSize=100&orderBy=name&fields=${fields}&key=${apiKey}`)
+      const response = await fetch(`https://www.googleapis.com/drive/v3/files?q=${query}&pageSize=1000&orderBy=name desc&fields=${fields}&key=${apiKey}`)
       if (!response.ok) {
         if (response.status === 403) throw new Error('Google Drive API ไม่อนุญาตคำขอ: เปิด Drive API และตรวจสอบข้อจำกัดของ API key ใน Google Cloud Console')
         throw new Error('ไม่สามารถโหลดรายการไฟล์ได้')
