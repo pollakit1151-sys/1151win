@@ -8,6 +8,10 @@ type MorphingItem = {
   subtitle: string
   description: string
   image?: string
+  previewUrl?: string
+  mediaUrl?: string
+  viewUrl?: string
+  mimeType?: string
   href: string
   download?: boolean
   visual?: boolean
@@ -33,7 +37,7 @@ type MorphingDialogProps = {
 export function MorphingDialog({ open, title, items, isLoading, error, apiKeyMissing, folderHref, onClose, onRetry }: MorphingDialogProps) {
   const [activeItem, setActiveItem] = useState<MorphingItem | null>(null)
   const [selectedPeriod, setSelectedPeriod] = useState<string>('latest_100')
-  if (!open) return null
+  const [downloadingId, setDownloadingId] = useState<string | null>(null)
 
   // 1. เรียงลำดับรายการทั้งหมดจากใหม่สุดไปเก่าสุดเสมอ
   const datedItems = useMemo(() => {
@@ -84,6 +88,44 @@ export function MorphingDialog({ open, title, items, isLoading, error, apiKeyMis
       return key === activePeriod
     })
   }, [datedItems, activePeriod])
+
+  // 4. ฟังก์ชันดาวน์โหลดไฟล์รองรับทั้ง iOS (Share Sheet / Save to Photos & Files) และ Android / PC
+  const handleDownload = async (item: MorphingItem) => {
+    if (!item.mediaUrl) {
+      window.open(item.href, '_blank', 'noopener,noreferrer')
+      return
+    }
+    setDownloadingId(item.id)
+    try {
+      const response = await fetch(item.mediaUrl)
+      if (!response.ok) throw new Error('Download failed')
+      const blob = await response.blob()
+      const fileType = item.mimeType || blob.type || 'application/octet-stream'
+      const fileObj = new File([blob], item.title, { type: fileType })
+
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+      if (isMobile && typeof navigator.canShare === 'function' && navigator.canShare({ files: [fileObj] })) {
+        await navigator.share({ files: [fileObj], title: item.title })
+        return
+      }
+
+      const blobUrl = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = blobUrl
+      link.download = item.title
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 60000)
+    } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') return
+      window.open(item.href, '_blank', 'noopener,noreferrer')
+    } finally {
+      setDownloadingId(null)
+    }
+  }
+
+  if (!open) return null
 
   return (
     <LayoutGroup>
@@ -146,7 +188,7 @@ export function MorphingDialog({ open, title, items, isLoading, error, apiKeyMis
                         <div className="morphing-info">
                           <p>{item.subtitle}</p>
                           <h3>{item.title}</h3>
-                          <span>{item.download ? <Download size={15} /> : <ArrowUpRight size={15} />} {item.download ? 'ดาวน์โหลดได้' : 'เปิดดูไฟล์'}</span>
+                          <span><Download size={15} /> ดูตัวอย่าง / ดาวน์โหลด</span>
                         </div>
                       )}
                     </motion.button>
@@ -177,18 +219,56 @@ export function MorphingDialog({ open, title, items, isLoading, error, apiKeyMis
         
         {activeItem && (
           <motion.div className="morphing-overlay nested-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setActiveItem(null)}>
-            <motion.div className="morphing-dialog" layoutId={`card-${activeItem.id}`} style={{ '--item-accent': activeItem.accent } as React.CSSProperties} onClick={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-label={activeItem.title}>
+            <motion.div className="morphing-dialog" layoutId={`card-${activeItem.id}`} style={{ '--item-accent': activeItem.accent, gridTemplateColumns: activeItem.previewUrl ? '1.35fr 1fr' : undefined, width: activeItem.previewUrl ? 'min(960px, 100%)' : undefined } as React.CSSProperties} onClick={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-label={activeItem.title}>
               <button className="morphing-close" onClick={() => setActiveItem(null)} aria-label="ปิด"><X size={18} /></button>
-              <div className="morphing-dialog-preview">
-                {activeItem.image ? <img src={activeItem.image} alt={activeItem.title} /> : <activeItem.icon size={64} strokeWidth={1.1} />}
+              <div className="morphing-dialog-preview" style={{ minHeight: activeItem.previewUrl ? '380px' : undefined }}>
+                {activeItem.mimeType?.startsWith('video/') && activeItem.mediaUrl ? (
+                  <video
+                    src={activeItem.mediaUrl}
+                    poster={activeItem.image}
+                    controls
+                    playsInline
+                    preload="metadata"
+                    style={{ width: '100%', height: '100%', maxHeight: '70vh', objectFit: 'contain', background: '#000' }}
+                  />
+                ) : activeItem.previewUrl ? (
+                  <iframe
+                    src={activeItem.previewUrl}
+                    title={activeItem.title}
+                    style={{ width: '100%', height: '100%', minHeight: '380px', border: 0, background: '#151816' }}
+                    allow="autoplay; fullscreen"
+                  />
+                ) : activeItem.image ? (
+                  <img src={activeItem.image} alt={activeItem.title} />
+                ) : (
+                  <activeItem.icon size={64} strokeWidth={1.1} />
+                )}
               </div>
               <div className="morphing-dialog-body">
                 <p>{activeItem.subtitle}</p>
-                <h2>{activeItem.title}</h2>
+                <h2 style={{ fontSize: 'clamp(18px, 3vw, 26px)', wordBreak: 'break-word', lineHeight: 1.3 }}>{activeItem.title}</h2>
                 <div className="morphing-description">{activeItem.content ?? activeItem.description}</div>
-                <a className="morphing-action" href={activeItem.href} target="_blank" rel="noreferrer">
-                  {activeItem.download ? <Download size={17} /> : <ArrowUpRight size={17} />} {activeItem.download ? 'ดาวน์โหลดไฟล์' : 'เปิดไฟล์ใน Drive'}
-                </a>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '24px' }}>
+                  <button
+                    type="button"
+                    className="morphing-action"
+                    style={{ marginTop: 0, border: 0, cursor: 'pointer' }}
+                    onClick={() => void handleDownload(activeItem)}
+                    disabled={downloadingId === activeItem.id}
+                  >
+                    {downloadingId === activeItem.id ? <LoaderCircle className="spin" size={17} /> : <Download size={17} />}
+                    {downloadingId === activeItem.id ? 'กำลังเตรียมไฟล์...' : 'ดาวน์โหลดลงเครื่อง'}
+                  </button>
+                  <a
+                    className="morphing-action"
+                    style={{ marginTop: 0, background: 'transparent', color: '#f2f2f2', border: '1px solid #4a4a4a' }}
+                    href={activeItem.viewUrl || activeItem.href}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    <ArrowUpRight size={17} /> เปิดใน Drive
+                  </a>
+                </div>
               </div>
             </motion.div>
           </motion.div>
