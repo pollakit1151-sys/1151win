@@ -41,8 +41,13 @@ function getFileIcon(mimeType: string) {
 
 function getFilePreview(file: DriveFile) {
   if (file.thumbnailLink) return file.thumbnailLink.replace(/=s\d+$/, '=s1200')
-  if (file.mimeType.startsWith('image/')) return `https://drive.google.com/thumbnail?id=${file.id}&sz=w2000`
-  return ''
+  return `https://drive.google.com/thumbnail?id=${file.id}&sz=w1200`
+}
+
+function getFileSubtitle(mimeType: string, name: string) {
+  const ext = name.includes('.') ? name.split('.').pop()?.toUpperCase() : ''
+  if (ext) return ext
+  return mimeType.split('/').pop()?.toUpperCase() ?? 'FILE'
 }
 
 function App() {
@@ -85,7 +90,7 @@ function App() {
         <section className="folder-picker" aria-label="เลือกโฟลเดอร์">
           {collections.map((collection, index) => { const Icon = collection.icon; const isActive = activeCollection.id === collection.id; return <motion.button key={collection.id} className={`folder-button ${isActive ? 'is-active' : ''}`} style={{ '--folder-accent': collection.accent } as React.CSSProperties} onClick={() => void loadFiles(collection)} whileTap={{ scale: .98 }}><img className="folder-image" src={collection.image} alt="" /><span className="folder-shade" /><span className="folder-number">0{index + 1}</span><Icon className="folder-icon" size={24} strokeWidth={1.6} /><span className="folder-title">{collection.title}</span><ExternalLink className="folder-arrow" size={16} /></motion.button> })}
         </section>
-        <MorphingDialog key={`${activeCollection.id}-${dialogVersion}`} open={isDialogOpen} title={activeCollection.title} items={files.map((file) => ({ id: file.id, title: file.name, subtitle: file.mimeType.split('/').pop()?.toUpperCase() ?? 'FILE', description: file.size ? `ขนาดไฟล์ ${Math.ceil(Number(file.size) / 1024)} KB` : 'เปิดดูไฟล์จาก Google Drive ได้ทันที', image: getFilePreview(file), visual: file.mimeType.startsWith('image/') || file.mimeType.startsWith('video/'), modifiedTime: file.modifiedTime, href: file.webContentLink || file.webViewLink || activeCollection.href, download: Boolean(file.webContentLink), accent: activeCollection.accent, icon: getFileIcon(file.mimeType) }))} isLoading={isLoading} error={error} apiKeyMissing={!apiKey} folderHref={activeCollection.href} isImageFolder={activeCollection.id === collections[0].id} onClose={() => setIsDialogOpen(false)} onRetry={() => void loadFiles(activeCollection)} />
+        <MorphingDialog key={`${activeCollection.id}-${dialogVersion}`} open={isDialogOpen} title={activeCollection.title} items={files.map((file) => ({ id: file.id, title: file.name, subtitle: getFileSubtitle(file.mimeType, file.name), description: file.size ? `ขนาดไฟล์ ${Math.ceil(Number(file.size) / 1024)} KB` : 'เปิดดูไฟล์จาก Google Drive ได้ทันที', image: getFilePreview(file), previewUrl: file.mimeType.startsWith('image/') ? '' : `https://drive.google.com/file/d/${file.id}/preview`, mediaUrl: apiKey ? `https://www.googleapis.com/drive/v3/files/${file.id}?alt=media&key=${apiKey}` : '', viewUrl: file.webViewLink || `https://drive.google.com/file/d/${file.id}/view`, mimeType: file.mimeType, visual: file.mimeType.startsWith('image/') || file.mimeType.startsWith('video/'), modifiedTime: file.modifiedTime, href: file.webContentLink || file.webViewLink || activeCollection.href, download: Boolean(file.webContentLink), accent: activeCollection.accent, icon: getFileIcon(file.mimeType) }))} isLoading={isLoading} error={error} apiKeyMissing={!apiKey} folderHref={activeCollection.href} isImageFolder={activeCollection.id === collections[0].id} onClose={() => setIsDialogOpen(false)} onRetry={() => void loadFiles(activeCollection)} />
       </div>
     </main>
   )
