@@ -1,5 +1,5 @@
 import { AnimatePresence, LayoutGroup, motion } from 'motion/react'
-import { ArrowUpRight, CalendarDays, Download, ExternalLink, LoaderCircle, RefreshCw, X } from 'lucide-react'
+import { ArrowUpRight, CalendarDays, Download, ExternalLink, LoaderCircle, Play, RefreshCw, X } from 'lucide-react'
 import { useState, useMemo, type ReactNode } from 'react'
 
 type MorphingItem = {
@@ -38,6 +38,7 @@ export function MorphingDialog({ open, title, items, isLoading, error, apiKeyMis
   const [activeItem, setActiveItem] = useState<MorphingItem | null>(null)
   const [selectedPeriod, setSelectedPeriod] = useState<string>('latest_100')
   const [downloadingId, setDownloadingId] = useState<string | null>(null)
+  const [isPlayingVideo, setIsPlayingVideo] = useState(false)
 
   // 1. เรียงลำดับรายการทั้งหมดจากใหม่สุดไปเก่าสุดเสมอ
   const datedItems = useMemo(() => {
@@ -173,7 +174,7 @@ export function MorphingDialog({ open, title, items, isLoading, error, apiKeyMis
                     <motion.button
                       key={item.id}
                       className={`morphing-card ${item.visual ? 'visual-card' : 'document-card'}`}
-                      onClick={() => setActiveItem(item)}
+                      onClick={() => { setIsPlayingVideo(false); setActiveItem(item) }}
                       style={{ '--item-accent': item.accent } as React.CSSProperties}
                       layoutId={`card-${item.id}`}
                       initial={{ opacity: 0, y: 18 }}
@@ -218,28 +219,32 @@ export function MorphingDialog({ open, title, items, isLoading, error, apiKeyMis
         </motion.div>
         
         {activeItem && (
-          <motion.div className="morphing-overlay nested-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setActiveItem(null)}>
-            <motion.div className="morphing-dialog" layoutId={`card-${activeItem.id}`} style={{ '--item-accent': activeItem.accent, gridTemplateColumns: activeItem.previewUrl ? '1.35fr 1fr' : undefined, width: activeItem.previewUrl ? 'min(960px, 100%)' : undefined } as React.CSSProperties} onClick={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-label={activeItem.title}>
-              <button className="morphing-close" onClick={() => setActiveItem(null)} aria-label="ปิด"><X size={18} /></button>
-              <div className="morphing-dialog-preview" style={{ minHeight: activeItem.previewUrl ? '380px' : undefined }}>
-                {activeItem.mimeType?.startsWith('video/') && activeItem.mediaUrl ? (
+          <motion.div className="morphing-overlay nested-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => { setIsPlayingVideo(false); setActiveItem(null) }}>
+            <motion.div className="morphing-dialog" layoutId={`card-${activeItem.id}`} style={{ '--item-accent': activeItem.accent } as React.CSSProperties} onClick={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-label={activeItem.title}>
+              <button className="morphing-close" onClick={() => { setIsPlayingVideo(false); setActiveItem(null) }} aria-label="ปิด"><X size={18} /></button>
+              <div className="morphing-dialog-preview">
+                {activeItem.mimeType?.startsWith('video/') && activeItem.mediaUrl && isPlayingVideo ? (
                   <video
                     src={activeItem.mediaUrl}
                     poster={activeItem.image}
                     controls
+                    autoPlay
                     playsInline
-                    preload="metadata"
-                    style={{ width: '100%', height: '100%', maxHeight: '70vh', objectFit: 'contain', background: '#000' }}
-                  />
-                ) : activeItem.previewUrl ? (
-                  <iframe
-                    src={activeItem.previewUrl}
-                    title={activeItem.title}
-                    style={{ width: '100%', height: '100%', minHeight: '380px', border: 0, background: '#151816' }}
-                    allow="autoplay; fullscreen"
                   />
                 ) : activeItem.image ? (
-                  <img src={activeItem.image} alt={activeItem.title} />
+                  <>
+                    <img src={activeItem.image} alt={activeItem.title} />
+                    {activeItem.mimeType?.startsWith('video/') && activeItem.mediaUrl && (
+                      <button
+                        type="button"
+                        className="video-play-button"
+                        onClick={() => setIsPlayingVideo(true)}
+                        aria-label="เล่นวิดีโอ"
+                      >
+                        <Play size={28} fill="currentColor" />
+                      </button>
+                    )}
+                  </>
                 ) : (
                   <activeItem.icon size={64} strokeWidth={1.1} />
                 )}
