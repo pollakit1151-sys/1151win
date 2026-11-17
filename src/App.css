@@ -75,3 +75,47 @@ body,
 .state-message { border-color: #3d3d3d; color: #a0a0a0; }
 .error-message { color: #d0d0d0; }
 .error-message button { border-color: #777; color: #ddd; }
+
+/* Ensure full uncropped image preview in modal */
+.morphing-dialog-preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 320px;
+  height: auto;
+  overflow: hidden;
+  background: #151816;
+}
+.morphing-dialog-preview img {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: min(76vh, 680px);
+  object-fit: contain;
+  margin: 0 auto;
+}
+@media (max-width: 820px) {
+  .morphing-dialog {
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100dvh - 32px);
+    overflow-y: auto;
+  }
+  .morphing-dialog-preview {
+    flex-shrink: 0;
+    min-height: 0;
+    height: auto;
+    max-height: none;
+  }
+  .morphing-dialog-preview img {
+    width: 100%;
+    height: auto;
+    max-height: 62dvh;
+    object-fit: contain;
+  }
+  .morphing-dialog-body {
+    flex-shrink: 0;
+    padding: 20px;
+  }
+}
